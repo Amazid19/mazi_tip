@@ -119,6 +119,21 @@
     <script>
         let connectedAccount = null;
 
+        // Check if already connected on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        connectedAccount = accounts[0];
+                        updateWalletUI(connectedAccount);
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        });
+
         // Auto-detect account changes
         if (typeof window.ethereum !== 'undefined') {
             window.ethereum.on('accountsChanged', (accounts) => {
@@ -167,12 +182,7 @@
             closeModal();
             if (typeof window.ethereum !== 'undefined') {
                 try {
-                    // Force account selection popup to allow switching accounts
-                    await window.ethereum.request({
-                        method: "wallet_requestPermissions",
-                        params: [{ eth_accounts: {} }]
-                    });
-
+                    // Clean permissions request to prevent unwanted network triggers
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     if (accounts.length > 0) {
                         connectedAccount = accounts[0];
@@ -206,7 +216,6 @@
 
         function disconnectWallet() {
             connectedAccount = null;
-            const btn = document.getElementById/('walletBtn');
             const btnElem = document.getElementById('walletBtn');
             btnElem.innerText = "Connect Wallet";
             btnElem.className = "px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold rounded-xl transition";
