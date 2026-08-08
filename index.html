@@ -23,7 +23,7 @@
                 
                 <!-- Dynamic Connect/Wallet Button -->
                 <div class="relative">
-                    <button id="walletBtn" onclick="connectWallet()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold rounded-xl transition">
+                    <button id="walletBtn" onclick="toggleWallet()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold rounded-xl transition">
                         Connect Wallet
                     </button>
 
@@ -36,14 +36,14 @@
                         <p id="popupAddress" class="text-xs font-bold text-gray-800 mb-3 truncate bg-gray-50 p-2 rounded-lg"></p>
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="copyAddress()" class="py-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 text-gray-700 hover:text-blue-600 text-xs font-semibold rounded-xl transition">Copy</button>
-                            <button onclick="disconnectWallet()" class="py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-red-100 text-xs font-semibold rounded-xl transition">Disconnect</button>
+                            <button onclick="disconnectWallet()" class="py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 hover:text-red-100 text-xs font-semibold rounded-xl transition">Disconnect</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <p class="text-xs text-gray-500 mb-4 bg-blue-50/80 py-2 px-3 rounded-lg border border-blue-100/50 text-center">
-                Tip securely using your connected wallet.
+                Tip USDC securely using your connected wallet.
             </p>
 
             <!-- Recipient Wallet Address Input -->
@@ -90,16 +90,60 @@
 
     </div>
 
+    <!-- Wallet Selection Modal -->
+    <div id="walletModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Connect Wallet</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Choose your preferred wallet to connect with mazi_tip.</p>
+            <div class="space-y-2">
+                <button onclick="connectWallet('MetaMask')" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-xl font-medium text-gray-800 transition">
+                    <span>MetaMask</span>
+                    <span class="text-xs text-blue-600 font-semibold">Popular</span>
+                </button>
+                <button onclick="connectWallet('Bitget')" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-xl font-medium text-gray-800 transition">
+                    <span>Bitget Wallet</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let connectedAccount = null;
 
-        async function connectWallet() {
+        // Auto-detect account changes
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length > 0) {
+                    connectedAccount = accounts[0];
+                    updateWalletUI(connectedAccount);
+                } else {
+                    disconnectWallet();
+                }
+            });
+        }
+
+        function toggleWallet() {
             if (connectedAccount) {
                 const popup = document.getElementById('accountPopup');
                 popup.classList.toggle('hidden');
-                return;
+            } else {
+                document.getElementById('walletModal').style.display = 'flex';
             }
+        }
 
+        function closeModal() {
+            document.getElementById('walletModal').style.display = 'none';
+        }
+
+        function closeAccountPopup() {
+            document.getElementById('accountPopup').classList.add('hidden');
+        }
+
+        async function connectWallet(walletName) {
+            closeModal();
             if (typeof window.ethereum !== 'undefined') {
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -111,7 +155,7 @@
                     console.error("User denied account access", error);
                 }
             } else {
-                alert("MetaMask not detected! Please install the extension.");
+                alert(walletName + " not detected! Please install the extension.");
             }
         }
 
@@ -125,11 +169,7 @@
             if(popupAddr) popupAddr.innerText = address;
         }
 
-        function closeAccountPopup() {
-            document.getElementById('accountPopup').classList.add('hidden');
-        }
-
-        function copyAddress() {
+    function copyAddress() {
             if (connectedAccount) {
                 navigator.clipboard.writeText(connectedAccount);
                 alert("Wallet address copied!");
@@ -150,19 +190,19 @@
         }
 
         function handleTokenChange() {
-            // Token handling placeholder
+            // Token handler placeholder
         }
 
         async function sendTip() {
             if (!connectedAccount) {
                 alert("Please connect your wallet first!");
-                connectWallet();
+                toggleWallet();
                 return;
             }
 
             const recipient = document.getElementById('recipientAddress').value.trim();
-            if (!recipient) {
-                alert("Please enter recipient address!");
+            if (!recipient || !recipient.startsWith('0x') || recipient.length !== 42) {
+                alert("Please enter a valid recipient wallet address!");
                 return;
             }
 
@@ -182,9 +222,11 @@
                 });
 
                 alert("Transaction submitted! Hash: " + tx.hash);
+                await tx.wait();
+                alert("Transaction sent successfully!");
             } catch (error) {
                 console.error("Transaction failed:", error);
-                alert("Transaction failed or rejected.");
+                alert("Transaction failed or rejected by user.");
             }
         }
     </script>
