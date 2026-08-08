@@ -167,7 +167,7 @@
             closeModal();
             if (typeof window.ethereum !== 'undefined') {
                 try {
-                    // Force account selection popup
+                    // Force account selection popup to allow switching accounts
                     await window.ethereum.request({
                         method: "wallet_requestPermissions",
                         params: [{ eth_accounts: {} }]
@@ -177,17 +177,6 @@
                     if (accounts.length > 0) {
                         connectedAccount = accounts[0];
                         updateWalletUI(connectedAccount);
-
-                        // Automatically Switch to Arc Testnet (Example chainId for Arc Testnet, e.g., hex format)
-                        // Replace '0x...' with actual Arc testnet Chain ID if needed, or keep standard handling
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x3a4' }], // Adjust Arc testnet Chain ID hex if available
-                            });
-                        } catch (switchError) {
-                            console.log("Network switch prompt handled or user needs manual switch:", switchError);
-                        }
                     }
                 } catch (error) {
                     console.error("User denied account access", error);
@@ -217,9 +206,10 @@
 
         function disconnectWallet() {
             connectedAccount = null;
-            const btn = document.getElementById('walletBtn');
-            btn.innerText = "Connect Wallet";
-            btn.className = "px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold rounded-xl transition";
+            const btn = document.getElementById/('walletBtn');
+            const btnElem = document.getElementById('walletBtn');
+            btnElem.innerText = "Connect Wallet";
+            btnElem.className = "px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold rounded-xl transition";
             closeAccountPopup();
         }
 
