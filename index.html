@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mazi_tip - Send Crypto Tips</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ethers.js CDN for Web3 Transactions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 </head>
 <body class="bg-blue-50 min-h-screen flex items-center justify-center p-0 sm:p-4">
 
@@ -92,6 +95,9 @@
 
     <script>
         let connectedAccount = null;
+        
+        // Insert your receiving wallet address here
+        const RECIPIENT_ADDRESS = "0xYourWalletAddressHere"; 
 
         function setAmount(val) {
             document.getElementById('customAmount').value = val;
@@ -140,7 +146,7 @@
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x...' }],
+                            params: [{ chainId: '0x...' }], // Arc Testnet Hex Chain ID will go here
                         });
                     } catch (switchError) {
                         console.log("Network switch prompt handled");
@@ -154,18 +160,36 @@
             }
         }
 
-        function sendTip() {
+        async function sendTip() {
             if (!connectedAccount) {
                 alert("Please connect your wallet first!");
                 toggleWallet();
                 return;
             }
+
             const amount = document.getElementById('customAmount').value;
             if (!amount || amount <= 0) {
                 alert("Please enter a valid tip amount!");
                 return;
             }
-            alert("Initiating secure transfer of " + amount + " on Arc Testnet...");
+
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                
+                const tx = await signer.sendTransaction({
+                    to: RECIPIENT_ADDRESS,
+                    value: ethers.utils.parseEther(amount.toString())
+                });
+
+                alert("Transaction submitted! Hash: " + tx.hash);
+                await tx.wait();
+                alert("Tip sent successfully! Thank you.");
+                
+            } catch (error) {
+                console.error("Transaction failed:", error);
+                alert("Transaction failed or was rejected.");
+            }
         }
     </script>
 </body>
