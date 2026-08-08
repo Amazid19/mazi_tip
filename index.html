@@ -167,6 +167,12 @@
             closeModal();
             if (typeof window.ethereum !== 'undefined') {
                 try {
+                    // এটি মেটামাস্কে অ্যাকাউন্ট সিলেকশন পপ-আপ জোরপূর্বক ওপেন করবে
+                    await window.ethereum.request({
+                        method: "wallet_requestPermissions",
+                        params: [{ eth_accounts: {} }]
+                    });
+
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     if (accounts.length > 0) {
                         connectedAccount = accounts[0];
