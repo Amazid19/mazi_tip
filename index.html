@@ -167,7 +167,7 @@
             closeModal();
             if (typeof window.ethereum !== 'undefined') {
                 try {
-                    // এটি মেটামাস্কে অ্যাকাউন্ট সিলেকশন পপ-আপ জোরপূর্বক ওপেন করবে
+                    // Force account selection popup
                     await window.ethereum.request({
                         method: "wallet_requestPermissions",
                         params: [{ eth_accounts: {} }]
@@ -177,6 +177,17 @@
                     if (accounts.length > 0) {
                         connectedAccount = accounts[0];
                         updateWalletUI(connectedAccount);
+
+                        // Automatically Switch to Arc Testnet (Example chainId for Arc Testnet, e.g., hex format)
+                        // Replace '0x...' with actual Arc testnet Chain ID if needed, or keep standard handling
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: '0x3a4' }], // Adjust Arc testnet Chain ID hex if available
+                            });
+                        } catch (switchError) {
+                            console.log("Network switch prompt handled or user needs manual switch:", switchError);
+                        }
                     }
                 } catch (error) {
                     console.error("User denied account access", error);
